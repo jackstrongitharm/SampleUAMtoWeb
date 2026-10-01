@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <title>Signing in&hellip;</title>
+    <style>body { font-family: Segoe UI, Arial, sans-serif; color: #1f2227; background: #f7f7f9; margin: 48px; }</style>
+  </head>
+  <body>
+    <h2 id="title">Signing in&hellip;</h2>
+    <p id="msg"></p>
+    <script>
+      // Unity's app-linking "login completed" page redirects here with ?code=&state= (or ?error=). Hand them to the
+      // app tab that opened this popup: postMessage to the opener, plus a BroadcastChannel on the same origin for
+      // browsers that cut the opener link. The code is useless without the app's PKCE verifier.
+      var p = new URLSearchParams(location.search);
+      var data = { type: "uind-signin", code: p.get("code") || "", state: p.get("state") || "", error: p.get("error") || "" };
+      try { if (window.opener) window.opener.postMessage(data, location.origin); } catch (e) { }
+      try { var bc = new BroadcastChannel("uind-signin"); bc.postMessage(data); bc.close(); } catch (e) { }
+      history.replaceState(null, "", location.pathname);   // drop the code from the address bar / history
+      var ok = data.code && !data.error;
+      document.getElementById("title").textContent = ok ? "Signed in to Unity Cloud" : "Sign-in failed";
+      document.getElementById("msg").textContent = ok ? "You can close this window and return to the app."
+                                                      : (data.error || "No sign-in code was returned.");
+      if (ok) setTimeout(function () { window.close(); }, 700);
+    </script>
+  </body>
+</html>
